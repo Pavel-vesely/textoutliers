@@ -10,6 +10,7 @@ public class InputSentence {
     private Boolean passive = false;
     private int sentiment = 3;
     private ArrayList<InputToken> tokens = new ArrayList<InputToken>();
+    private int[] nerArray;
 
     public InputSentence() {
     }
@@ -44,6 +45,14 @@ public class InputSentence {
 
     public void setSentiment(int sentiment) {
         this.sentiment = sentiment;
+    }
+
+    public int[] getNerArray() {
+        return nerArray;
+    }
+
+    public void setNerArray(int[] nerArray) {
+        this.nerArray = nerArray;
     }
 
     public Boolean getPassive() {

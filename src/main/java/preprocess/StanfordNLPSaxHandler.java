@@ -8,11 +8,13 @@ import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import utils.Constants;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class StanfordNLPSaxHandler extends DefaultHandler {
 
@@ -23,6 +25,7 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
     private SyllableCounter counter;
     private String header;
     private boolean passive;
+    private int[] nerArray;
 
     private StringBuilder content;
     private String word;
@@ -61,6 +64,9 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
             passive = false;
             startChar = Integer.MAX_VALUE;
             endChar = Integer.MIN_VALUE;
+
+            nerArray = new int[Constants.NER_ARRAY_LEN];
+            Arrays.fill(nerArray, 0);
             if (atts.getValue("id") != null) {
                 inSentence.setId(Integer.valueOf(atts.getValue("id")));
             }
@@ -104,6 +110,7 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
             inSentence.setEndChar(endChar);
             inSentence.setTokens(tokens);
             adSentenceBlock = new ADSentenceBlock(inSentence, header, word2Vec, topW2vIndexes);
+            inSentence.setNerArray(nerArray);
             try {
                 outBw.write(adSentenceBlock.toCSVLine());
                 outBw.newLine();
@@ -119,6 +126,11 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
         } else if (qName.equalsIgnoreCase("CharacterOffsetEnd")) {
             if (endChar < Integer.valueOf(content.toString())) {
                 endChar = Integer.valueOf(content.toString());
+            }
+        } else if (qName.equalsIgnoreCase("ner")) {
+            int ner = utils.NerTags.nerTagToInt(content.toString());
+            if (ner >= 0 && ner <= Constants.NER_ARRAY_LEN) {
+                nerArray[ner]++;
             }
         }
     }

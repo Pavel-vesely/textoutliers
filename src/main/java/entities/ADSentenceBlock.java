@@ -24,6 +24,7 @@ public class ADSentenceBlock {
     private int passive = 0;
     private int questions = 0;
     private int[] sentimentArray = new int[5];
+    private int[] nerArray;
     private int[] posArray = new int[PosTags.getPosTagsLenght()];
     private double[] w2vArray = new double[Constants.W2V_VECTOR_LEN];
     private int startsWithCCorIN = 0;
@@ -51,6 +52,7 @@ public class ADSentenceBlock {
             this.passive = 1;
         }
         this.sentimentArray[inSentence.getSentiment()]++;
+        System.arraycopy(inSentence.getNerArray(), 0, this.nerArray, 0, nerArray.length);
         int syllables;
         int pos;
         INDArray wordMatrix;
@@ -116,11 +118,14 @@ public class ADSentenceBlock {
         for (int i = 0; i < sentimentArray.length; i++) {
             sentimentArray[i] = Integer.parseInt(brokenLine[16 + i]);
         }
+        for (int i = 0; i < nerArray.length; i++) {
+            nerArray[i] = Integer.parseInt(brokenLine[21 + i]);
+        }
         for (int i = 0; i < posArray.length; i++) {
-            posArray[i] = Integer.parseInt(brokenLine[21 + i]);
+            posArray[i] = Integer.parseInt(brokenLine[27 + i]);
         }
         for (int i = 0; i < w2vArray.length; i++) {
-            w2vArray[i] = Double.valueOf(brokenLine[67 + i]);
+            w2vArray[i] = Double.valueOf(brokenLine[73 + i]);
         }
 
     }
@@ -143,6 +148,9 @@ public class ADSentenceBlock {
         startsWithCCorIN += otherADSB.startsWithCCorIN;
         for (int i = 0; i < sentimentArray.length; i++) {
             sentimentArray[i] += otherADSB.sentimentArray[i];
+        }
+        for (int i = 0; i < nerArray.length; i++) {
+            nerArray[i] += otherADSB.nerArray[i];
         }
         for (int i = 0; i < posArray.length; i++) {
             posArray[i] += otherADSB.posArray[i];
@@ -170,6 +178,9 @@ public class ADSentenceBlock {
         for (int i = 0; i < sentimentArray.length; i++) {
             sentimentArray[i] -= otherADSB.sentimentArray[i];
         }
+        for (int i = 0; i < nerArray.length; i++) {
+            nerArray[i] -= otherADSB.nerArray[i];
+        }
         for (int i = 0; i < posArray.length; i++) {
             posArray[i] -= otherADSB.posArray[i];
         }
@@ -192,6 +203,7 @@ public class ADSentenceBlock {
         questions = otherADSB.questions;
         startsWithCCorIN = otherADSB.startsWithCCorIN;
         System.arraycopy(otherADSB.sentimentArray, 0, sentimentArray, 0, sentimentArray.length);
+        System.arraycopy(otherADSB.nerArray, 0, nerArray, 0, nerArray.length);
         System.arraycopy(otherADSB.posArray, 0, posArray, 0, posArray.length);
         System.arraycopy(otherADSB.w2vArray, 0, w2vArray, 0, w2vArray.length);
     }
@@ -217,6 +229,7 @@ public class ADSentenceBlock {
                 "\"questions\": " + Integer.toString(questions) + "," +
                 "\"startsWithCCorIN\": " + Integer.toString(questions) + "," +
                 "\"sentimentArray\": " + Arrays.toString(sentimentArray) + "," +
+                "\"nerArray\": " + Arrays.toString(nerArray) + "," +
                 "\"posArray\": " + Arrays.toString(posArray) + "," +
                 "\"w2vArray\": " + Arrays.toString(w2vArray) +
                 "}}";
@@ -244,6 +257,7 @@ public class ADSentenceBlock {
                 Integer.toString(questions) + "," +
                 Integer.toString(startsWithCCorIN) + "," +
                 Arrays.toString(sentimentArray).replace("[", "").replace("]", "") + "," +
+                Arrays.toString(nerArray).replace("[", "").replace("]", "") + "," +
                 Arrays.toString(posArray).replace("[", "").replace("]", "") + "," +
                 Arrays.toString(w2vArray).replace("[", "").replace("]", "");
 
@@ -256,7 +270,8 @@ public class ADSentenceBlock {
             w2vHeader += ", w2v" + Integer.toString(i);
         }
         return "header, id, startChar, endChar, sentences, words, chars, syllables, shortSentences, longSentences, shortWords, longWords," +
-                " sixCharWords, passive, questions, startsWithCCorIN, sentiment0, sentiment1, sentiment2, sentiment3, sentiment4, " +
+                " sixCharWords, passive, questions, startsWithCCorIN, sentiment0, sentiment1, sentiment2, sentiment3, sentiment4, nerPER," +
+                " nerLOC, nerORG, nerNUM, nerTIME, nerMISC," +
                 PosTags.getCSVHeaderString() + w2vHeader;
     }
 
@@ -325,6 +340,10 @@ public class ADSentenceBlock {
 
     public int[] getSentimentArray() {
         return sentimentArray;
+    }
+
+    public int[] getNerArray() {
+        return nerArray;
     }
 
     public int[] getPosArray() {

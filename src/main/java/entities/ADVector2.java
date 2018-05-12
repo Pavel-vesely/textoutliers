@@ -4,11 +4,10 @@ import utils.Constants;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Random;
 
 public class ADVector2 {
     private double[] surfaceVector = new double[21];
-    private double[] sentimentVector = new double[5];
+    private double[] addedVector = new double[11];
     private double[] wordClassVector = new double[12];
     private double[] w2vFeatureVector = new double[Constants.W2V_VECTOR_LEN];
     private int startChar = 0;
@@ -48,7 +47,7 @@ public class ADVector2 {
     public ADVector2() {
         initiateSelectedW2VIndices();
         Arrays.fill(surfaceVector, 0.0);
-        Arrays.fill(sentimentVector, 0.0);
+        Arrays.fill(addedVector, 0.0);
         Arrays.fill(wordClassVector, 0.0);
         Arrays.fill(w2vFeatureVector, 0.0);
     }
@@ -60,7 +59,7 @@ public class ADVector2 {
         startChar = sBlock.getStartChar();
         endChar = sBlock.getEndChar();
         loadSurfaceFeatures(sBlock);
-        loadSentimentFeatures(sBlock);
+        loadAddedFeatures(sBlock);
         loadWordClasssFeatures(sBlock);
         loadW2vFeatures(sBlock);
     }
@@ -71,7 +70,7 @@ public class ADVector2 {
         startChar = sBlock.getStartChar();
         endChar = sBlock.getEndChar();
         loadSurfaceFeatures(sBlock);
-        loadSentimentFeatures(sBlock);
+        loadAddedFeatures(sBlock);
         loadWordClasssFeatures(sBlock);
         loadW2vFeatures(sBlock);
     }
@@ -114,11 +113,16 @@ public class ADVector2 {
         surfaceVector[20] = 3 + Math.sqrt((double) sBlock.getLongWords() * 30 / sentences); //SMOG Index
     }
 
-    public void loadSentimentFeatures(ADSentenceBlock sBlock) {
+    public void loadAddedFeatures(ADSentenceBlock sBlock) {
         double sentences = (double) sBlock.getSentences();
         int[] sentimentArray = sBlock.getSentimentArray();
+        int[] nerArray = sBlock.getNerArray();
+
         for (int i = 0; i < 5; i++) {
-            sentimentVector[i] = (double) sentimentArray[i] / sentences;
+            addedVector[i] = (double) sentimentArray[i] / sentences;
+        }
+        for (int i = 5; i < 11; i++) {
+            addedVector[i] = (double) nerArray[i - 5] / sentences;
         }
     }
 
@@ -148,8 +152,8 @@ public class ADVector2 {
         for (int i = 0; i < surfaceVector.length; i++) {
             surfaceVector[i] = (surfaceVector[i] - minVec.surfaceVector[i]) / (maxVec.surfaceVector[i] - minVec.surfaceVector[i]);
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            sentimentVector[i] = (sentimentVector[i] - minVec.sentimentVector[i]) / (maxVec.sentimentVector[i] - minVec.sentimentVector[i]);
+        for (int i = 0; i < addedVector.length; i++) {
+            addedVector[i] = (addedVector[i] - minVec.addedVector[i]) / (maxVec.addedVector[i] - minVec.addedVector[i]);
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             wordClassVector[i] = (wordClassVector[i] - minVec.wordClassVector[i]) / (maxVec.wordClassVector[i] - minVec.wordClassVector[i]);
@@ -163,8 +167,8 @@ public class ADVector2 {
         for (int i = 0; i < surfaceVector.length; i++) {
             surfaceVector[i] = (surfaceVector[i] - minVec.surfaceVector[i]) / (maxVec.surfaceVector[i] - minVec.surfaceVector[i]);
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            sentimentVector[i] = (sentimentVector[i] - minVec.sentimentVector[i]) / (maxVec.sentimentVector[i] - minVec.sentimentVector[i]);
+        for (int i = 0; i < addedVector.length; i++) {
+            addedVector[i] = (addedVector[i] - minVec.addedVector[i]) / (maxVec.addedVector[i] - minVec.addedVector[i]);
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             wordClassVector[i] = (wordClassVector[i] - minVec.wordClassVector[i]) / (maxVec.wordClassVector[i] - minVec.wordClassVector[i]);
@@ -190,10 +194,10 @@ public class ADVector2 {
             thisSqrtSum += this.surfaceVector[i] * this.surfaceVector[i];
             otherSqrtSum += other.surfaceVector[i] * other.surfaceVector[i];
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            multiplySum += this.sentimentVector[i] * other.sentimentVector[i];
-            thisSqrtSum += this.sentimentVector[i] * this.sentimentVector[i];
-            otherSqrtSum += other.sentimentVector[i] * other.sentimentVector[i];
+        for (int i = 0; i < addedVector.length; i++) {
+            multiplySum += this.addedVector[i] * other.addedVector[i];
+            thisSqrtSum += this.addedVector[i] * this.addedVector[i];
+            otherSqrtSum += other.addedVector[i] * other.addedVector[i];
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             multiplySum += this.wordClassVector[i] * other.wordClassVector[i];
@@ -223,10 +227,10 @@ public class ADVector2 {
             thisSqrtSum += this.surfaceVector[i] * this.surfaceVector[i];
             otherSqrtSum += other.surfaceVector[i] * other.surfaceVector[i];
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            multiplySum += this.sentimentVector[i] * other.sentimentVector[i];
-            thisSqrtSum += this.sentimentVector[i] * this.sentimentVector[i];
-            otherSqrtSum += other.sentimentVector[i] * other.sentimentVector[i];
+        for (int i = 0; i < addedVector.length; i++) {
+            multiplySum += this.addedVector[i] * other.addedVector[i];
+            thisSqrtSum += this.addedVector[i] * this.addedVector[i];
+            otherSqrtSum += other.addedVector[i] * other.addedVector[i];
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             multiplySum += this.wordClassVector[i] * other.wordClassVector[i];
@@ -267,8 +271,8 @@ public class ADVector2 {
         for (int i = 0; i < surfaceVector.length; i++) {
             surfaceVector[i] = this.surfaceVector[i] < other.surfaceVector[i] ? this.surfaceVector[i] : other.surfaceVector[i];
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            sentimentVector[i] = this.sentimentVector[i] < other.sentimentVector[i] ? this.sentimentVector[i] : other.sentimentVector[i];
+        for (int i = 0; i < addedVector.length; i++) {
+            addedVector[i] = this.addedVector[i] < other.addedVector[i] ? this.addedVector[i] : other.addedVector[i];
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             wordClassVector[i] = this.wordClassVector[i] < other.wordClassVector[i] ? this.wordClassVector[i] : other.wordClassVector[i];
@@ -282,8 +286,8 @@ public class ADVector2 {
         for (int i = 0; i < surfaceVector.length; i++) {
             surfaceVector[i] = this.surfaceVector[i] > other.surfaceVector[i] ? this.surfaceVector[i] : other.surfaceVector[i];
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            sentimentVector[i] = this.sentimentVector[i] > other.sentimentVector[i] ? this.sentimentVector[i] : other.sentimentVector[i];
+        for (int i = 0; i < addedVector.length; i++) {
+            addedVector[i] = this.addedVector[i] > other.addedVector[i] ? this.addedVector[i] : other.addedVector[i];
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             wordClassVector[i] = this.wordClassVector[i] > other.wordClassVector[i] ? this.wordClassVector[i] : other.wordClassVector[i];
@@ -297,8 +301,8 @@ public class ADVector2 {
         for (int i = 0; i < surfaceVector.length; i++) {
             surfaceVector[i] = val;
         }
-        for (int i = 0; i < sentimentVector.length; i++) {
-            sentimentVector[i] = val;
+        for (int i = 0; i < addedVector.length; i++) {
+            addedVector[i] = val;
         }
         for (int i = 0; i < wordClassVector.length; i++) {
             wordClassVector[i] = val;
