@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Preprocess {
     public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
@@ -79,7 +80,7 @@ public class Preprocess {
         StanfordNLPSaxHandler stanfordNLPSaxHandler;
         int[] topIndexes = null;
         ArrayList<String> filePaths =  new ArrayList<>();
-        Files.newDirectoryStream(Paths.get(".\\resources\\test"),
+        Files.newDirectoryStream(Paths.get(".\\resources\\test3"),
                 path -> path.toString().endsWith(".xml"))
                 .forEach(path -> filePaths.add(path.toString()));
         String fileName;
@@ -98,6 +99,11 @@ public class Preprocess {
                 saxParser.parse(xmlInput, w2vFirstReadSaxHandler);
                 topIndexes = W2vVectorOperations.getTopIndexes(w2vFirstReadSaxHandler.getSumW2vVector(), Constants.W2V_NUM_IN_SENTENCEBLOCK);
             }
+//            int[] numbers = new int[300];
+//            for (int j = 0; j < 300; j++) {
+//                numbers[j] = j;
+//            }
+//            topIndexes = numbers;
             yourmilliseconds = System.currentTimeMillis();
             resultdate = new Date(yourmilliseconds);
             System.out.println("Parsing file: " + fileName + ", Time: " + sdf.format(resultdate));

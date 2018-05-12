@@ -21,8 +21,9 @@ public class AnomalyTreeSet extends TreeSet<Anomaly> {
                 this.add(item);
                 return;
             }
+        } else {
+            this.remove(this.first());
+            this.add(item);
         }
-        this.remove(this.first());
-        this.add(item);
     }
 }

@@ -25,7 +25,7 @@ public class ADSentenceBlock {
     private int questions = 0;
     private int[] sentimentArray = new int[5];
     private int[] posArray = new int[PosTags.getPosTagsLenght()];
-    private double[] w2vArray = new double[Constants.W2V_NUM_IN_SENTENCEBLOCK];
+    private double[] w2vArray = new double[Constants.W2V_VECTOR_LEN];
     private int startsWithCCorIN = 0;
 
 

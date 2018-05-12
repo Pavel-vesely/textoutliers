@@ -10,13 +10,43 @@ public class ADVector2 {
     private double[] surfaceVector = new double[21];
     private double[] sentimentVector = new double[5];
     private double[] wordClassVector = new double[12];
-    private double[] w2vFeatureVector = new double[Constants.W2V_NUM_IN_SENTENCEBLOCK];
+    private double[] w2vFeatureVector = new double[Constants.W2V_VECTOR_LEN];
     private int startChar = 0;
     private int endChar = 0;
     private String header = "";
     private int id = 0;
+    private static int[] selectedW2VIndices;
+
+    private void initiateSelectedW2VIndices(){
+        if (selectedW2VIndices != null) {
+            return;
+        }
+        int[] indices = new int[Constants.W2V_VECTOR_LEN];
+        for (int i = 0; i < Constants.W2V_VECTOR_LEN; i++) {
+            indices[i] = i;
+        }
+        selectedW2VIndices = indices;
+    }
+
+    public static void setSelectedW2VIndices(int[] newIndices) throws IllegalArgumentException {
+        int[] newIndicesCopy = Arrays.copyOf(newIndices, newIndices.length);
+        if (newIndicesCopy == null) { throw new IllegalArgumentException(); }
+        if (newIndicesCopy.length < 1 || newIndicesCopy.length > Constants.W2V_VECTOR_LEN) { throw new IllegalArgumentException(); }
+        if (newIndicesCopy[0] < 0 || newIndicesCopy[newIndicesCopy.length - 1] >= Constants.W2V_VECTOR_LEN) { throw new IllegalArgumentException(); }
+
+        int last = newIndicesCopy[0];
+        for (int i = 1; i < newIndicesCopy.length; i++) {
+            if (newIndicesCopy[i] <= last) {
+                throw new IllegalArgumentException();
+            }
+            last = newIndicesCopy[i];
+        }
+
+        selectedW2VIndices = newIndicesCopy;
+    }
 
     public ADVector2() {
+        initiateSelectedW2VIndices();
         Arrays.fill(surfaceVector, 0.0);
         Arrays.fill(sentimentVector, 0.0);
         Arrays.fill(wordClassVector, 0.0);
@@ -24,6 +54,7 @@ public class ADVector2 {
     }
 
     public ADVector2(ADSentenceBlock sBlock) {
+        initiateSelectedW2VIndices();
         header = sBlock.getHeader();
         id = sBlock.getId();
         startChar = sBlock.getStartChar();
@@ -169,10 +200,15 @@ public class ADVector2 {
             thisSqrtSum += this.wordClassVector[i] * this.wordClassVector[i];
             otherSqrtSum += other.wordClassVector[i] * other.wordClassVector[i];
         }
+
+        int j = 0;
         for (int i = 0; i < w2vFeatureVector.length; i++) {
-            multiplySum += this.w2vFeatureVector[i] * other.w2vFeatureVector[i];
-            thisSqrtSum += this.w2vFeatureVector[i] * this.w2vFeatureVector[i];
-            otherSqrtSum += other.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+            if (j < selectedW2VIndices.length && selectedW2VIndices[j] == i) {
+                j++;
+                multiplySum += this.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+                thisSqrtSum += this.w2vFeatureVector[i] * this.w2vFeatureVector[i];
+                otherSqrtSum += other.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+            }
         }
         double distance = 1 - (multiplySum / (Math.sqrt(thisSqrtSum) * Math.sqrt(otherSqrtSum)));
         return distance;
@@ -205,10 +241,14 @@ public class ADVector2 {
         double multiplySum = 0.0;
         double thisSqrtSum = 0.0;
         double otherSqrtSum = 0.0;
+        int j = 0;
         for (int i = 0; i < w2vFeatureVector.length; i++) {
-            multiplySum += this.w2vFeatureVector[i] * other.w2vFeatureVector[i];
-            thisSqrtSum += this.w2vFeatureVector[i] * this.w2vFeatureVector[i];
-            otherSqrtSum += other.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+            if (j < selectedW2VIndices.length && selectedW2VIndices[j] == i) {
+                j++;
+                multiplySum += this.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+                thisSqrtSum += this.w2vFeatureVector[i] * this.w2vFeatureVector[i];
+                otherSqrtSum += other.w2vFeatureVector[i] * other.w2vFeatureVector[i];
+            }
         }
         double distance = 1 - (multiplySum / (Math.sqrt(thisSqrtSum) * Math.sqrt(otherSqrtSum)));
         return distance;

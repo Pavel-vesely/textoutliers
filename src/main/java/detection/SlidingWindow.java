@@ -14,6 +14,7 @@ public class SlidingWindow {
 //        System.out.println(sumBlock.toCSVLine());
         int windowChars = 0;
         int goneChars = 0;
+        int lineNumber = 0;
         ADSentenceBlock windowBlock = new ADSentenceBlock(-1, "");
         ADSentenceBlock[] window = new ADSentenceBlock[windowSize];
         int windowPointer;
@@ -68,8 +69,8 @@ public class SlidingWindow {
 
             ADVector2 windowVector = new ADVector2(windowBlock);
             ADVector2 sumVector = new ADVector2(sumBlock);
-            windowVector.normalize(minVec, maxVec); //NORMING
-            sumVector.normalize(minVec, maxVec);
+            windowVector.normalizeNoW2v(minVec, maxVec); //NORMING
+            sumVector.normalizeNoW2v(minVec, maxVec);
 
             //vectorBw.write(windowVector.toCSVLine());
             //vectorBw.newLine();
@@ -78,11 +79,12 @@ public class SlidingWindow {
             distanceBw.newLine();
 
 
-            anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistance(sumVector)));
-            anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistanceNoW2V(sumVector)));
-            anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistanceOnlyW2V(sumVector)));
-            anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getRandomDistance(sumVector)));
+            anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistance(sumVector)));
+            anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
+            anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
+            anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
             while ((line = br.readLine()) != null) {
+                lineNumber++;
                 windowChars -= window[windowPointer].getChars();
                 windowBlock.decrease(window[windowPointer]);
                 goneChars += window[windowPointer].getChars();
@@ -109,18 +111,18 @@ public class SlidingWindow {
 
                 windowVector.loadSentenceBlock(windowBlock);
                 sumVector.loadSentenceBlock(sumBlock);
-                windowVector.normalize(minVec, maxVec); //normalize
-                sumVector.normalize(minVec, maxVec);
+                windowVector.normalizeNoW2v(minVec, maxVec); //normalize
+                sumVector.normalizeNoW2v(minVec, maxVec);
 
 //                vectorBw.write(windowVector.toCSVLine());
 //                vectorBw.newLine();
                 //distanceBw.write(windowVector.differenceToCSVLine(sumVector));
                 distanceBw.write(windowVector.cosineDistancesToCSVLine(sumVector));
                 distanceBw.newLine();
-                anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistance(sumVector)));
-                anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistanceNoW2V(sumVector)));
-                anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getCosineDistanceOnlyW2V(sumVector)));
-                anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), windowBlock.getStartChar(), windowBlock.getEndChar(), windowVector.getRandomDistance(sumVector)));
+                anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistance(sumVector)));
+                anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
+                anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
+                anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
             }
 
             for (windowPointer = 0; windowPointer < windowSize; windowPointer++) {
