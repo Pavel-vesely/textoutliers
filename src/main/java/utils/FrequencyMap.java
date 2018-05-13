@@ -5,8 +5,8 @@ import java.io.FileReader;
 import java.util.HashMap;
 
 public class FrequencyMap {
-    private HashMap<String, Integer> hashMap;
-    public FrequencyMap(String sourcePath) {
+    private static HashMap<String, Integer> hashMap;
+    public static void initialize(String sourcePath) {
         hashMap = new HashMap<String, Integer>();
         try (BufferedReader br = new BufferedReader(new FileReader(sourcePath))) {
 
@@ -31,7 +31,10 @@ public class FrequencyMap {
         }
     }
 
-    public int getFrequency(String word) {
+    public static int getFrequency(String word) {
+        if (!hashMap.containsKey(word.toLowerCase())) {
+            return -1;
+        }
         return hashMap.get(word.toLowerCase());
     }
 }

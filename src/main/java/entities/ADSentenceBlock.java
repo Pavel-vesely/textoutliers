@@ -3,6 +3,7 @@ package entities;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import utils.Constants;
+import utils.FrequencyMap;
 import utils.W2vVectorOperations;
 
 import java.util.Arrays;
@@ -24,7 +25,8 @@ public class ADSentenceBlock {
     private int passive = 0;
     private int questions = 0;
     private int[] sentimentArray = new int[5];
-    private int[] nerArray;
+    private int[] nerArray = new int[6];
+    private int[] freqArray = new int[6];
     private int[] posArray = new int[PosTags.getPosTagsLenght()];
     private double[] w2vArray = new double[Constants.W2V_VECTOR_LEN];
     private int startsWithCCorIN = 0;
@@ -38,7 +40,7 @@ public class ADSentenceBlock {
         this.id = id;
     }
 
-    public ADSentenceBlock(InputSentence inSentence, String header, final Word2Vec word2Vec, final int[] topIndexes) {
+    public ADSentenceBlock(InputSentence inSentence, String header, final Word2Vec word2Vec) {//, final int[] topIndexes) {
         Arrays.fill(sentimentArray, 0);
         Arrays.fill(posArray, 0);
         Arrays.fill(w2vArray, 0);
@@ -57,6 +59,7 @@ public class ADSentenceBlock {
         int pos;
         INDArray wordMatrix;
         double[] wordVector;
+        int freq;
         for (InputToken token : inSentence.getTokens()) {
             words++;
             chars += token.getCharacters();
@@ -74,6 +77,22 @@ public class ADSentenceBlock {
             if (token.getPOS().equals(".") && token.getLemma().equals("?")) {
                 questions = 1;
             }
+            freq = FrequencyMap.getFrequency(token.getLemma());
+            if (freq < 0) {
+                freqArray[5]++;
+            } else if (freq < 1000) {
+                freqArray[0]++;
+            } else if (freq < 5000) {
+                freqArray[1]++;
+            } else if (freq < 10000) {
+                freqArray[2]++;
+            } else if (freq < 50000) {
+                freqArray[3]++;
+            } else if (freq > 0) {
+                freqArray[4]++;
+            }
+
+
             pos = PosTags.getPosIndex(token.getPOS());
             posArray[pos]++;
             if (starting && pos > 8) {
@@ -84,7 +103,9 @@ public class ADSentenceBlock {
             }
             wordMatrix = word2Vec.getWordVectorMatrix(token.getLemma());
             if (wordMatrix != null) {
-                wordVector = W2vVectorOperations.getArrayByIndexes(wordMatrix, topIndexes);
+//                wordVector = W2vVectorOperations.getArrayByIndexes(wordMatrix, topIndexes);
+//                w2vArray = W2vVectorOperations.addDoubleVectors(w2vArray, wordVector);
+                wordVector = W2vVectorOperations.wordMatrixToDoubles(wordMatrix);
                 w2vArray = W2vVectorOperations.addDoubleVectors(w2vArray, wordVector);
             }
 
@@ -121,11 +142,14 @@ public class ADSentenceBlock {
         for (int i = 0; i < nerArray.length; i++) {
             nerArray[i] = Integer.parseInt(brokenLine[21 + i]);
         }
+        for (int i = 0; i < freqArray.length; i++) {
+            nerArray[i] = Integer.parseInt(brokenLine[27 + i]);
+        }
         for (int i = 0; i < posArray.length; i++) {
-            posArray[i] = Integer.parseInt(brokenLine[27 + i]);
+            posArray[i] = Integer.parseInt(brokenLine[33 + i]);
         }
         for (int i = 0; i < w2vArray.length; i++) {
-            w2vArray[i] = Double.valueOf(brokenLine[73 + i]);
+            w2vArray[i] = Double.valueOf(brokenLine[79 + i]);
         }
 
     }
@@ -151,6 +175,9 @@ public class ADSentenceBlock {
         }
         for (int i = 0; i < nerArray.length; i++) {
             nerArray[i] += otherADSB.nerArray[i];
+        }
+        for (int i = 0; i < freqArray.length; i++) {
+            freqArray[i] += otherADSB.freqArray[i];
         }
         for (int i = 0; i < posArray.length; i++) {
             posArray[i] += otherADSB.posArray[i];
@@ -181,6 +208,9 @@ public class ADSentenceBlock {
         for (int i = 0; i < nerArray.length; i++) {
             nerArray[i] -= otherADSB.nerArray[i];
         }
+        for (int i = 0; i < freqArray.length; i++) {
+            freqArray[i] -= otherADSB.freqArray[i];
+        }
         for (int i = 0; i < posArray.length; i++) {
             posArray[i] -= otherADSB.posArray[i];
         }
@@ -204,6 +234,7 @@ public class ADSentenceBlock {
         startsWithCCorIN = otherADSB.startsWithCCorIN;
         System.arraycopy(otherADSB.sentimentArray, 0, sentimentArray, 0, sentimentArray.length);
         System.arraycopy(otherADSB.nerArray, 0, nerArray, 0, nerArray.length);
+        System.arraycopy(otherADSB.freqArray, 0, freqArray, 0, freqArray.length);
         System.arraycopy(otherADSB.posArray, 0, posArray, 0, posArray.length);
         System.arraycopy(otherADSB.w2vArray, 0, w2vArray, 0, w2vArray.length);
     }
@@ -230,6 +261,7 @@ public class ADSentenceBlock {
                 "\"startsWithCCorIN\": " + Integer.toString(questions) + "," +
                 "\"sentimentArray\": " + Arrays.toString(sentimentArray) + "," +
                 "\"nerArray\": " + Arrays.toString(nerArray) + "," +
+                "\"freqArray\": " + Arrays.toString(freqArray) + "," +
                 "\"posArray\": " + Arrays.toString(posArray) + "," +
                 "\"w2vArray\": " + Arrays.toString(w2vArray) +
                 "}}";
@@ -258,6 +290,7 @@ public class ADSentenceBlock {
                 Integer.toString(startsWithCCorIN) + "," +
                 Arrays.toString(sentimentArray).replace("[", "").replace("]", "") + "," +
                 Arrays.toString(nerArray).replace("[", "").replace("]", "") + "," +
+                Arrays.toString(freqArray).replace("[", "").replace("]", "") + "," +
                 Arrays.toString(posArray).replace("[", "").replace("]", "") + "," +
                 Arrays.toString(w2vArray).replace("[", "").replace("]", "");
 
@@ -271,7 +304,7 @@ public class ADSentenceBlock {
         }
         return "header, id, startChar, endChar, sentences, words, chars, syllables, shortSentences, longSentences, shortWords, longWords," +
                 " sixCharWords, passive, questions, startsWithCCorIN, sentiment0, sentiment1, sentiment2, sentiment3, sentiment4, nerPER," +
-                " nerLOC, nerORG, nerNUM, nerTIME, nerMISC," +
+                " nerLOC, nerORG, nerNUM, nerTIME, nerMISC, f1k, f5k, f10k, f50k, f100k, f100k+" +
                 PosTags.getCSVHeaderString() + w2vHeader;
     }
 
@@ -344,6 +377,10 @@ public class ADSentenceBlock {
 
     public int[] getNerArray() {
         return nerArray;
+    }
+
+    public int[] getFreqArray() {
+        return freqArray;
     }
 
     public int[] getPosArray() {

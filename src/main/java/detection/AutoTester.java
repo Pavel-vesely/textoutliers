@@ -15,11 +15,12 @@ public class AutoTester {
             int windowSize = 5;
             int anomalySize = 20;
             int normalSize = 500;
-            File normalFile = new File(".\\resources\\test4\\mini-articles.xml-sblock.csv");
-            File anomalyFile = new File(".\\resources\\test4\\stylometry2.xml-sblock.csv");//c1mini-articles.xml-sblock.csv
-            File allFile = new File(".\\resources\\test4\\all.xml-sblock.csv");
+            File normalFile = new File(".\\resources\\dev1\\mini-articles.txt.xml-sblock.csv");
+            File anomalyFile = new File(".\\resources\\dev1\\micro-anarchist_cookbook.txt.xml-sblock.csv");//c1mini-articles.xml-sblock.csv
+            File allFile = new File(".\\resources\\dev1\\all-text.txt.xml-sblock.csv");
+//            File resultFile = new File(".\\resources\\test2\\results");
 
-            File testFile = new File(".\\resources\\test2\\a1-sblock.csv");
+//            File testFile = new File(".\\resources\\test2\\a1-sblock.csv");
 
             BufferedReader normReader = new BufferedReader(new FileReader(normalFile));
             int normLines = 0;
@@ -34,6 +35,8 @@ public class AutoTester {
             int anoOffset;
             int insideOffset;
             BufferedWriter writer;
+//            BufferedWriter resultWriter = new BufferedWriter(new FileWriter(resultFile));
+
             String line;
             int anoStart;
             int anoSize;
@@ -44,8 +47,9 @@ public class AutoTester {
                 Arrays.fill(res, 0);
             }
 
-            for (int x = 0; x < 100; x++) {
 
+            for (int x = 0; x < 100; x++) {
+                File testFile = new File(".\\resources\\dev1\\a1-sblock" + Integer.toString(x)+ ".csv");
 
                 normOffset = rnd.nextInt(normLines - normalSize - 1);
                 anoOffset = rnd.nextInt(anoLines - anomalySize) + 1;
@@ -91,7 +95,8 @@ public class AutoTester {
                 ADVector2[] normVectors = SlidingWindow.getNormVectors(testFile.getPath());
                 ADSentenceBlock sumBlock = SlidingWindow.getSum(testFile.getPath());
 
-                int[] selectedW2V = W2VSelect.selectW2VIndicesIDF(testFile.getPath(), allFile.getPath(),75, "sum-squared");
+                int[] selectedW2V = W2VSelect.selectW2VIndices(testFile.getPath(),75, "sum-squared");
+//                int[] selectedW2V = W2VSelect.selectW2VIndicesIDF(testFile.getPath(), allFile.getPath(),75, "sum-squared");
                 ADVector2.setSelectedW2VIndices(selectedW2V);
 
                 AnomalyTreeSet[] sets = SlidingWindow.slidingWindow(testFile.getPath(), "", testFile.getPath() + "-dist.csv", windowSize, sumBlock, normVectors[0], normVectors[1], 20);

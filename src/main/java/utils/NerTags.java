@@ -3,7 +3,7 @@ package utils;
 public class NerTags {
     public static int nerTagToInt(String nerTag) {
         switch (nerTag.toUpperCase()) {
-            case "0":
+            case "O":
                 return -1;
             case "PERSON": return 0;
             case "LOCATION": return 1;

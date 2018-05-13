@@ -11,6 +11,7 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.omg.CORBA.CODESET_INCOMPATIBLE;
 import org.xml.sax.SAXException;
 import utils.Constants;
+import utils.FrequencyMap;
 import utils.W2vVectorOperations;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -29,6 +30,8 @@ import java.util.List;
 
 public class Preprocess {
     public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
+        FrequencyMap.initialize(".\\resources\\wiki-word-freq.txt");
+
         Word2Vec word2vec;
 
         long yourmilliseconds = System.currentTimeMillis();
@@ -80,7 +83,7 @@ public class Preprocess {
         StanfordNLPSaxHandler stanfordNLPSaxHandler;
         int[] topIndexes = null;
         ArrayList<String> filePaths =  new ArrayList<>();
-        Files.newDirectoryStream(Paths.get(".\\resources\\test3"),
+        Files.newDirectoryStream(Paths.get(".\\resources\\dev0"),
                 path -> path.toString().endsWith(".xml"))
                 .forEach(path -> filePaths.add(path.toString()));
         String fileName;
@@ -89,16 +92,16 @@ public class Preprocess {
             fileName = myFilePath.substring(myFilePath.lastIndexOf("\\"));
 
             yourmilliseconds = System.currentTimeMillis();
-            resultdate = new Date(yourmilliseconds);
-            if (myFilePath.contains("1")) {
-                System.out.println("Preparing w2v choice for: " + fileName + ", Time: " + sdf.format(resultdate));
-                factory = SAXParserFactory.newInstance();
-                xmlInput = new FileInputStream(myFilePath);
-                saxParser = factory.newSAXParser();
-                w2vFirstReadSaxHandler = new W2vFirstReadSaxHandler(word2vec);
-                saxParser.parse(xmlInput, w2vFirstReadSaxHandler);
-                topIndexes = W2vVectorOperations.getTopIndexes(w2vFirstReadSaxHandler.getSumW2vVector(), Constants.W2V_NUM_IN_SENTENCEBLOCK);
-            }
+//            resultdate = new Date(yourmilliseconds);
+//            if (myFilePath.contains("1")) {
+//                System.out.println("Preparing w2v choice for: " + fileName + ", Time: " + sdf.format(resultdate));
+//                factory = SAXParserFactory.newInstance();
+//                xmlInput = new FileInputStream(myFilePath);
+//                saxParser = factory.newSAXParser();
+////                w2vFirstReadSaxHandler = new W2vFirstReadSaxHandler(word2vec);
+////                saxParser.parse(xmlInput, w2vFirstReadSaxHandler);
+////                topIndexes = W2vVectorOperations.getTopIndexes(w2vFirstReadSaxHandler.getSumW2vVector(), Constants.W2V_NUM_IN_SENTENCEBLOCK);
+//            }
 //            int[] numbers = new int[300];
 //            for (int j = 0; j < 300; j++) {
 //                numbers[j] = j;
@@ -111,7 +114,7 @@ public class Preprocess {
             factory = SAXParserFactory.newInstance();
             xmlInput = new FileInputStream(myFilePath);
             saxParser = factory.newSAXParser();
-            stanfordNLPSaxHandler = new StanfordNLPSaxHandler(myFilePath, myFilePath + "-sblock.csv", word2vec, topIndexes);
+            stanfordNLPSaxHandler = new StanfordNLPSaxHandler(myFilePath, myFilePath + "-sblock.csv", word2vec);//, topIndexes);
             saxParser.parse(xmlInput, stanfordNLPSaxHandler);
 
             yourmilliseconds = System.currentTimeMillis();

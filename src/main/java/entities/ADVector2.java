@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class ADVector2 {
     private double[] surfaceVector = new double[21];
     private double[] addedVector = new double[11];
-    private double[] wordClassVector = new double[12];
+    private double[] wordClassAndFrequencyVector = new double[15];
     private double[] w2vFeatureVector = new double[Constants.W2V_VECTOR_LEN];
     private int startChar = 0;
     private int endChar = 0;
@@ -48,7 +48,7 @@ public class ADVector2 {
         initiateSelectedW2VIndices();
         Arrays.fill(surfaceVector, 0.0);
         Arrays.fill(addedVector, 0.0);
-        Arrays.fill(wordClassVector, 0.0);
+        Arrays.fill(wordClassAndFrequencyVector, 0.0);
         Arrays.fill(w2vFeatureVector, 0.0);
     }
 
@@ -60,7 +60,7 @@ public class ADVector2 {
         endChar = sBlock.getEndChar();
         loadSurfaceFeatures(sBlock);
         loadAddedFeatures(sBlock);
-        loadWordClasssFeatures(sBlock);
+        loadWordClassAndFrequencyFeatures(sBlock);
         loadW2vFeatures(sBlock);
     }
 
@@ -71,7 +71,7 @@ public class ADVector2 {
         endChar = sBlock.getEndChar();
         loadSurfaceFeatures(sBlock);
         loadAddedFeatures(sBlock);
-        loadWordClasssFeatures(sBlock);
+        loadWordClassAndFrequencyFeatures(sBlock);
         loadW2vFeatures(sBlock);
     }
 
@@ -126,19 +126,23 @@ public class ADVector2 {
         }
     }
 
-    public void loadWordClasssFeatures(ADSentenceBlock sBlock) {
+    public void loadWordClassAndFrequencyFeatures(ADSentenceBlock sBlock) {
         int[] posArray = sBlock.getPosArray();
+        int[] freqArray = sBlock.getFreqArray();
         double words = (double) sBlock.getWords();
-        wordClassVector[0] = (posArray[20] + posArray[21] + posArray[22] + posArray[23]) / words; //Nouns
-        wordClassVector[1] = (posArray[35] + posArray[36] + posArray[37] + posArray[38] + posArray[39] + posArray[40]) / words; //Verbs
-        wordClassVector[2] = (posArray[15] + posArray[16] + posArray[17]) / words; //Adjectives
-        wordClassVector[3] = (posArray[28] + posArray[29] + posArray[30]) / words; //Adverbs
-        wordClassVector[4] = (posArray[26] + posArray[27] + posArray[42] + posArray[43]) / words; //Pronouns
-        wordClassVector[5] = (posArray[14]) / words; //Prepositions
-        wordClassVector[6] = (posArray[9]) / words; //Conjunctions
-        wordClassVector[7] = (posArray[11]) / words; //Determiner
-        wordClassVector[8] = (posArray[41] + posArray[42] + posArray[43] + posArray[44]) / words; //WH-words
-        wordClassVector[1] = (posArray[35] + posArray[36] + posArray[37] + posArray[38] + posArray[39] + posArray[40]) / words; //Verbs
+        wordClassAndFrequencyVector[0] = (posArray[20] + posArray[21] + posArray[22] + posArray[23]) / words; //Nouns
+        wordClassAndFrequencyVector[1] = (posArray[35] + posArray[36] + posArray[37] + posArray[38] + posArray[39] + posArray[40]) / words; //Verbs
+        wordClassAndFrequencyVector[2] = (posArray[15] + posArray[16] + posArray[17]) / words; //Adjectives
+        wordClassAndFrequencyVector[3] = (posArray[28] + posArray[29] + posArray[30]) / words; //Adverbs
+        wordClassAndFrequencyVector[4] = (posArray[26] + posArray[27] + posArray[42] + posArray[43]) / words; //Pronouns
+        wordClassAndFrequencyVector[5] = (posArray[14]) / words; //Prepositions
+        wordClassAndFrequencyVector[6] = (posArray[9]) / words; //Conjunctions
+        wordClassAndFrequencyVector[7] = (posArray[11]) / words; //Determiner
+        wordClassAndFrequencyVector[8] = (posArray[41] + posArray[42] + posArray[43] + posArray[44]) / words; //WH-words
+
+        for (int i = 0; i < freqArray.length; i++) {
+            wordClassAndFrequencyVector[i + 8] = freqArray[i];
+        }
     }
 
     public void loadW2vFeatures(ADSentenceBlock sBlock) {
@@ -155,8 +159,8 @@ public class ADVector2 {
         for (int i = 0; i < addedVector.length; i++) {
             addedVector[i] = (addedVector[i] - minVec.addedVector[i]) / (maxVec.addedVector[i] - minVec.addedVector[i]);
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            wordClassVector[i] = (wordClassVector[i] - minVec.wordClassVector[i]) / (maxVec.wordClassVector[i] - minVec.wordClassVector[i]);
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            wordClassAndFrequencyVector[i] = (wordClassAndFrequencyVector[i] - minVec.wordClassAndFrequencyVector[i]) / (maxVec.wordClassAndFrequencyVector[i] - minVec.wordClassAndFrequencyVector[i]);
         }
         for (int i = 0; i < w2vFeatureVector.length; i++) {
             w2vFeatureVector[i] = (w2vFeatureVector[i] - minVec.w2vFeatureVector[i]) / (maxVec.w2vFeatureVector[i] - minVec.w2vFeatureVector[i]);
@@ -170,8 +174,8 @@ public class ADVector2 {
         for (int i = 0; i < addedVector.length; i++) {
             addedVector[i] = (addedVector[i] - minVec.addedVector[i]) / (maxVec.addedVector[i] - minVec.addedVector[i]);
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            wordClassVector[i] = (wordClassVector[i] - minVec.wordClassVector[i]) / (maxVec.wordClassVector[i] - minVec.wordClassVector[i]);
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            wordClassAndFrequencyVector[i] = (wordClassAndFrequencyVector[i] - minVec.wordClassAndFrequencyVector[i]) / (maxVec.wordClassAndFrequencyVector[i] - minVec.wordClassAndFrequencyVector[i]);
         }
     }
 
@@ -199,10 +203,10 @@ public class ADVector2 {
             thisSqrtSum += this.addedVector[i] * this.addedVector[i];
             otherSqrtSum += other.addedVector[i] * other.addedVector[i];
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            multiplySum += this.wordClassVector[i] * other.wordClassVector[i];
-            thisSqrtSum += this.wordClassVector[i] * this.wordClassVector[i];
-            otherSqrtSum += other.wordClassVector[i] * other.wordClassVector[i];
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            multiplySum += this.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
+            thisSqrtSum += this.wordClassAndFrequencyVector[i] * this.wordClassAndFrequencyVector[i];
+            otherSqrtSum += other.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
         }
 
         int j = 0;
@@ -232,10 +236,28 @@ public class ADVector2 {
             thisSqrtSum += this.addedVector[i] * this.addedVector[i];
             otherSqrtSum += other.addedVector[i] * other.addedVector[i];
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            multiplySum += this.wordClassVector[i] * other.wordClassVector[i];
-            thisSqrtSum += this.wordClassVector[i] * this.wordClassVector[i];
-            otherSqrtSum += other.wordClassVector[i] * other.wordClassVector[i];
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            multiplySum += this.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
+            thisSqrtSum += this.wordClassAndFrequencyVector[i] * this.wordClassAndFrequencyVector[i];
+            otherSqrtSum += other.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
+        }
+        double distance = 1 - (multiplySum / (Math.sqrt(thisSqrtSum) * Math.sqrt(otherSqrtSum)));
+        return distance;
+    }
+
+    public double getCosineDistanceGuthrie(ADVector2 other) {
+        double multiplySum = 0.0;
+        double thisSqrtSum = 0.0;
+        double otherSqrtSum = 0.0;
+        for (int i = 0; i < surfaceVector.length; i++) {
+            multiplySum += this.surfaceVector[i] * other.surfaceVector[i];
+            thisSqrtSum += this.surfaceVector[i] * this.surfaceVector[i];
+            otherSqrtSum += other.surfaceVector[i] * other.surfaceVector[i];
+        }
+        for (int i = 0; i < addedVector.length; i++) {
+            multiplySum += this.addedVector[i] * other.addedVector[i];
+            thisSqrtSum += this.addedVector[i] * this.addedVector[i];
+            otherSqrtSum += other.addedVector[i] * other.addedVector[i];
         }
         double distance = 1 - (multiplySum / (Math.sqrt(thisSqrtSum) * Math.sqrt(otherSqrtSum)));
         return distance;
@@ -274,8 +296,8 @@ public class ADVector2 {
         for (int i = 0; i < addedVector.length; i++) {
             addedVector[i] = this.addedVector[i] < other.addedVector[i] ? this.addedVector[i] : other.addedVector[i];
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            wordClassVector[i] = this.wordClassVector[i] < other.wordClassVector[i] ? this.wordClassVector[i] : other.wordClassVector[i];
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            wordClassAndFrequencyVector[i] = this.wordClassAndFrequencyVector[i] < other.wordClassAndFrequencyVector[i] ? this.wordClassAndFrequencyVector[i] : other.wordClassAndFrequencyVector[i];
         }
         for (int i = 0; i < w2vFeatureVector.length; i++) {
             w2vFeatureVector[i] = this.w2vFeatureVector[i] < other.w2vFeatureVector[i] ? this.w2vFeatureVector[i] : other.w2vFeatureVector[i];
@@ -289,8 +311,8 @@ public class ADVector2 {
         for (int i = 0; i < addedVector.length; i++) {
             addedVector[i] = this.addedVector[i] > other.addedVector[i] ? this.addedVector[i] : other.addedVector[i];
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            wordClassVector[i] = this.wordClassVector[i] > other.wordClassVector[i] ? this.wordClassVector[i] : other.wordClassVector[i];
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            wordClassAndFrequencyVector[i] = this.wordClassAndFrequencyVector[i] > other.wordClassAndFrequencyVector[i] ? this.wordClassAndFrequencyVector[i] : other.wordClassAndFrequencyVector[i];
         }
         for (int i = 0; i < w2vFeatureVector.length; i++) {
             w2vFeatureVector[i] = this.w2vFeatureVector[i] > other.w2vFeatureVector[i] ? this.w2vFeatureVector[i] : other.w2vFeatureVector[i];
@@ -304,8 +326,8 @@ public class ADVector2 {
         for (int i = 0; i < addedVector.length; i++) {
             addedVector[i] = val;
         }
-        for (int i = 0; i < wordClassVector.length; i++) {
-            wordClassVector[i] = val;
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            wordClassAndFrequencyVector[i] = val;
         }
         for (int i = 0; i < w2vFeatureVector.length; i++) {
             w2vFeatureVector[i] = val;

@@ -34,11 +34,11 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
 
     private BufferedWriter outBw;
     private final Word2Vec word2Vec;
-    private final int[] topW2vIndexes;
+//    private final int[] topW2vIndexes;
 
     private ADSentenceBlock sumADSB;
 
-    public StanfordNLPSaxHandler(String header, String outFilePath, Word2Vec w2v, int[] topW2vIndexes) throws IOException {
+    public StanfordNLPSaxHandler(String header, String outFilePath, Word2Vec w2v) throws IOException { //, int[] topW2vIndexes
         tokens = new ArrayList<InputToken>();
         content = new StringBuilder();
         counter = new SyllableCounter();
@@ -46,7 +46,7 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
 
         outBw = new BufferedWriter(new FileWriter(outFilePath));
         word2Vec = w2v;
-        this.topW2vIndexes = topW2vIndexes;
+//        this.topW2vIndexes = topW2vIndexes;
 
         try {
             outBw.write(ADSentenceBlock.getCSVHeader());
@@ -109,8 +109,8 @@ public class StanfordNLPSaxHandler extends DefaultHandler {
             inSentence.setStartChar(startChar);
             inSentence.setEndChar(endChar);
             inSentence.setTokens(tokens);
-            adSentenceBlock = new ADSentenceBlock(inSentence, header, word2Vec, topW2vIndexes);
             inSentence.setNerArray(nerArray);
+            adSentenceBlock = new ADSentenceBlock(inSentence, header, word2Vec);//, topW2vIndexes);
             try {
                 outBw.write(adSentenceBlock.toCSVLine());
                 outBw.newLine();
