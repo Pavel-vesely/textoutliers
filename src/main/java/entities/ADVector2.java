@@ -115,6 +115,8 @@ public class ADVector2 {
 
     public void loadAddedFeatures(ADSentenceBlock sBlock) {
         double sentences = (double) sBlock.getSentences();
+        double words = (double) sBlock.getWords();
+
         int[] sentimentArray = sBlock.getSentimentArray();
         int[] nerArray = sBlock.getNerArray();
 
@@ -122,7 +124,7 @@ public class ADVector2 {
             addedVector[i] = (double) sentimentArray[i] / sentences;
         }
         for (int i = 5; i < 11; i++) {
-            addedVector[i] = (double) nerArray[i - 5] / sentences;
+            addedVector[i] = (double) nerArray[i - 5] / words;
         }
     }
 
@@ -179,13 +181,16 @@ public class ADVector2 {
         }
     }
 
-    public String cosineDistancesToCSVLine(ADVector2 other) {
+    public String cosineDistancesToCSVLine(ADVector2 other, String text) {
         String resultString = "\"" + header + "\"," +
                 Integer.toString(id) + ", " + Integer.toString(startChar) + ", " + Integer.toString(endChar);
 
         resultString += ", " + Double.toString(getCosineDistance(other));
+        resultString += ", " + Double.toString(getCosineDistanceGuthrie(other));
         resultString += ", " + Double.toString(getCosineDistanceNoW2V(other));
         resultString += ", " + Double.toString(getCosineDistanceOnlyW2V(other));
+        resultString += ", \"" + text.replaceAll("_"," ") + "\"";
+
         return resultString;
     }
 
@@ -254,10 +259,10 @@ public class ADVector2 {
             thisSqrtSum += this.surfaceVector[i] * this.surfaceVector[i];
             otherSqrtSum += other.surfaceVector[i] * other.surfaceVector[i];
         }
-        for (int i = 0; i < addedVector.length; i++) {
-            multiplySum += this.addedVector[i] * other.addedVector[i];
-            thisSqrtSum += this.addedVector[i] * this.addedVector[i];
-            otherSqrtSum += other.addedVector[i] * other.addedVector[i];
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            multiplySum += this.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
+            thisSqrtSum += this.wordClassAndFrequencyVector[i] * this.wordClassAndFrequencyVector[i];
+            otherSqrtSum += other.wordClassAndFrequencyVector[i] * other.wordClassAndFrequencyVector[i];
         }
         double distance = 1 - (multiplySum / (Math.sqrt(thisSqrtSum) * Math.sqrt(otherSqrtSum)));
         return distance;
@@ -286,7 +291,7 @@ public class ADVector2 {
     }
 
     public static String getShortHeader() {
-        return "header, id, startChar, endChar, allDistance, noW2VDistance, onlyW2VDistance";
+        return "header, id, startChar, endChar, all distance, Guthrie distance, Guthrie+ distance, word2vec distance, text starts with";
     }
 
     public void setLesser(ADVector2 other) {
@@ -332,5 +337,44 @@ public class ADVector2 {
         for (int i = 0; i < w2vFeatureVector.length; i++) {
             w2vFeatureVector[i] = val;
         }
+    }
+
+    public static String getCSVHeader() {
+        String w2vHeader = "";
+        for (int i = 0; i < Constants.W2V_VECTOR_LEN; i++) {
+            w2vHeader += ", w2v" + Integer.toString(i);
+        }
+        String header = "header, id, startChar, endChar, ";
+        header += "Avg sentence length, Avg word length, Avg syllables/word, Percentage of short sentences (<8 words), Percentage of long sentences (16+ words), ";
+        header += "Percentage of short words (1 syllable), Percentage of long words (3+ syllables), Percentage of words with 6+ chars, Percentage of passive sentences, ";
+        header += "Percentage of sentences that are questions, Sentences starting with CC or IN, Percentage of punctuation characters, Percentage of special chars , ";
+        header += "Percentage of chars that are comma, Flesch-Kincaid Reading Ease, Flesch-Kincaid Grade Level, Gunning-Fog Index, Coleman-Liau Formula, Automated Readability Index, ";
+        header += "Lix Formula, SMOG Index,";
+        header += "sentiment0, sentiment1, sentiment2, sentiment3, sentiment4, nerPER,";
+        header += "nerLOC, nerORG, nerNUM, nerTIME, nerMISC, Nouns, Verbs, Adjectives, Adverbs, Pronouns, Prepositions, ";
+        header += "Conjunctions, Determiners, WH-words, f1k, f5k, f10k, f50k, f100k, f100k+ " + w2vHeader + ", Text starts with";
+
+        return header;
+    }
+
+    public String toCSVLine(String text) {
+        String line = "\"" + header + "\"," +
+                Integer.toString(id) + "," +
+                Integer.toString(startChar) + "," +
+                Integer.toString(endChar) + ",";
+        for (int i = 0; i < surfaceVector.length; i++) {
+            line += Double.toString(surfaceVector[i])+",";
+        }
+        for (int i = 0; i < addedVector.length; i++) {
+            line += Double.toString(addedVector[i])+",";
+        }
+        for (int i = 0; i < wordClassAndFrequencyVector.length; i++) {
+            line += Double.toString(wordClassAndFrequencyVector[i])+",";
+        }
+        for (int i = 0; i < w2vFeatureVector.length; i++) {
+            line += Double.toString(w2vFeatureVector[i])+",";
+        }
+        line += text;
+        return line;
     }
 }

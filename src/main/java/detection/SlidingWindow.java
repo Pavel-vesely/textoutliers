@@ -1,13 +1,19 @@
 package detection;
 
 import entities.ADSentenceBlock;
-import entities.ADVector;
 import entities.ADVector2;
 
 import java.io.*;
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SlidingWindow {
+
+    public static AnomalyTreeSet[] findAnomalies(String srcFilePath, String outVectorsFilePath, String outDistancesFilePath, int windowSize, int anomalyBuffer) throws IOException {
+        ADSentenceBlock sumBlock = getSum(srcFilePath);
+        ADVector2[] extremeVectors = getNormVectors(srcFilePath);
+        return  slidingWindow(srcFilePath, outVectorsFilePath, outDistancesFilePath, windowSize, sumBlock, extremeVectors[0], extremeVectors[1], anomalyBuffer);
+    }
 
     public static AnomalyTreeSet[] slidingWindow(String srcFilePath, String outVectorsFilePath, String outDistancesFilePath,
                                      int windowSize, ADSentenceBlock sumBlock, ADVector2 minVec, ADVector2 maxVec, int anomalyBuffer) throws IOException {
@@ -18,8 +24,8 @@ public class SlidingWindow {
         ADSentenceBlock windowBlock = new ADSentenceBlock(-1, "");
         ADSentenceBlock[] window = new ADSentenceBlock[windowSize];
         int windowPointer;
-        AnomalyTreeSet[] anomalyTreeSets = new AnomalyTreeSet[4];
-        for (int i = 0; i < 4; i++) {
+        AnomalyTreeSet[] anomalyTreeSets = new AnomalyTreeSet[5];
+        for (int i = 0; i < 5; i++) {
             anomalyTreeSets[i] = new AnomalyTreeSet();
             for (int j = 0; j < anomalyBuffer; j++) {
                 anomalyTreeSets[i].add(new Anomaly(-1, -j, -j + 1, -1.0));
@@ -30,7 +36,7 @@ public class SlidingWindow {
 
         try (
                 BufferedReader br = new BufferedReader(new FileReader(srcFilePath));
-                //BufferedWriter vectorBw = new BufferedWriter(new FileWriter(outVectorsFilePath));
+                BufferedWriter vectorBw = new BufferedWriter(new FileWriter(outVectorsFilePath));
                 BufferedWriter distanceBw = new BufferedWriter(new FileWriter(outDistancesFilePath))
         ) {
             String line;
@@ -55,8 +61,8 @@ public class SlidingWindow {
             windowBlock.setHeader(window[0].getHeader());
             windowBlock.setId(window[0].getId());
 
-            //vectorBw.write(ADVector2.getCSVHeader());
-            //vectorBw.newLine();
+            vectorBw.write(ADVector2.getCSVHeader());
+            vectorBw.newLine();
             //distanceBw.write(ADVector2.getCSVHeader() + ", distance");
             distanceBw.write(ADVector2.getShortHeader());
             distanceBw.newLine();
@@ -72,17 +78,18 @@ public class SlidingWindow {
             windowVector.normalizeNoW2v(minVec, maxVec); //NORMING
             sumVector.normalizeNoW2v(minVec, maxVec);
 
-            //vectorBw.write(windowVector.toCSVLine());
-            //vectorBw.newLine();
+            vectorBw.write(windowVector.toCSVLine(window[windowPointer].getText()));
+            vectorBw.newLine();
             //distanceBw.write(windowVector.differenceToCSVLine(sumVector));
-            distanceBw.write(windowVector.cosineDistancesToCSVLine(sumVector));
-            distanceBw.newLine();
+            distanceBw.write(windowVector.cosineDistancesToCSVLine(sumVector, window[windowPointer].getText()) + System.getProperty("line.separator"));
+//            distanceBw.newLine();
 
 
             anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistance(sumVector)));
-            anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
-            anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
-            anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
+            anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceGuthrie(sumVector)));
+            anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
+            anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
+            anomalyTreeSets[4].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
             while ((line = br.readLine()) != null) {
                 lineNumber++;
                 windowChars -= window[windowPointer].getChars();
@@ -103,26 +110,23 @@ public class SlidingWindow {
                 windowBlock.setEndChar(goneChars + windowChars);
 
                 windowPointer = (windowPointer + 1) % windowSize;
-//                text = "";
-//                for (int i = 0; i < windowSize; i++) {
-//                    text += window[(windowPointer + i) % windowSize].getFirstSentence();
-//                }
-//                windowBlock.setFirstSentence(text);
+
 
                 windowVector.loadSentenceBlock(windowBlock);
                 sumVector.loadSentenceBlock(sumBlock);
                 windowVector.normalizeNoW2v(minVec, maxVec); //normalize
                 sumVector.normalizeNoW2v(minVec, maxVec);
 
-//                vectorBw.write(windowVector.toCSVLine());
-//                vectorBw.newLine();
+                vectorBw.write(windowVector.toCSVLine(window[windowPointer].getText()));
+                vectorBw.newLine();
                 //distanceBw.write(windowVector.differenceToCSVLine(sumVector));
-                distanceBw.write(windowVector.cosineDistancesToCSVLine(sumVector));
-                distanceBw.newLine();
+                distanceBw.write(windowVector.cosineDistancesToCSVLine(sumVector, window[windowPointer].getText()) + System.getProperty("line.separator"));
+//                distanceBw.newLine();
                 anomalyTreeSets[0].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistance(sumVector)));
-                anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
-                anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
-                anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
+                anomalyTreeSets[1].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceGuthrie(sumVector)));
+                anomalyTreeSets[2].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceNoW2V(sumVector)));
+                anomalyTreeSets[3].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getCosineDistanceOnlyW2V(sumVector)));
+                anomalyTreeSets[4].updateSet(new Anomaly(windowBlock.getId(), lineNumber, lineNumber + windowSize, windowVector.getRandomDistance(sumVector)));
             }
 
             for (windowPointer = 0; windowPointer < windowSize; windowPointer++) {
@@ -135,90 +139,6 @@ public class SlidingWindow {
         return anomalyTreeSets;
     }
 
-//    public static void slidingWindow(String srcFilePath, String outVectorsFilePath, int windowSize, ADSentenceBlock sumBlock, double[][] normVector) throws IOException {
-//        //System.out.println(sumBlock.toCSVLine());
-//        ADSentenceBlock windowBlock = new ADSentenceBlock(-1, "");
-//        ADSentenceBlock[] window = new ADSentenceBlock[windowSize];
-//        int windowPointer;
-//
-//        //System.out.println(ADVector2.getCSVHeader());
-//
-//        try (
-//                BufferedReader br = new BufferedReader(new FileReader(srcFilePath));
-//                BufferedWriter vectorBw = new BufferedWriter(new FileWriter(outVectorsFilePath))
-//        ) {
-//            String line;
-//            for (windowPointer = 0; windowPointer < windowSize; windowPointer++) {
-//                if ((line = br.readLine()) != null) {
-//                    if (line.equals(ADSentenceBlock.getCSVHeader())) {
-//                        windowPointer--;
-//                        continue;
-//                    }
-//                    window[windowPointer] = new ADSentenceBlock(-1, "");
-//                    window[windowPointer].loadCSVLine(line);
-//                    windowBlock.increase(window[windowPointer]);
-//                    sumBlock.decrease(window[windowPointer]);
-//                } else {
-//                    throw new Exception();
-//                }
-//            }
-//            windowPointer = 0;
-//            windowBlock.setHeader(window[0].getHeader());
-//            windowBlock.setId(window[0].getId());
-//
-//            vectorBw.write(ADVector2.getCSVHeader());
-//            vectorBw.newLine();
-//
-////            String text = "";
-////            for (int i = 0; i < windowSize; i++) {
-////                text += window[(windowPointer + i) % windowSize].getFirstSentence();
-////            }
-////            windowBlock.setFirstSentence(text);
-//
-//            ADVector2 windowVector = new ADVector2(windowBlock);
-//            ADVector2 sumVector = new ADVector2(sumBlock);
-//            windowVector.normalize(normVector); //normalize
-//            sumVector.normalize(normVector);
-//
-//            vectorBw.write(windowVector.toCSVLine());
-//            vectorBw.newLine();
-//
-//
-//            while ((line = br.readLine()) != null) {
-//                windowBlock.decrease(window[windowPointer]);
-//                sumBlock.increase(window[windowPointer]);
-//
-//                window[windowPointer].loadCSVLine(line);
-//                windowBlock.setId(window[(windowPointer + 1) % windowSize].getId());
-//                windowBlock.setHeader(window[(windowPointer + 1) % windowSize].getHeader());
-//
-//                windowBlock.increase(window[windowPointer]);
-//                sumBlock.decrease(window[windowPointer]);
-//
-//                windowPointer = (windowPointer + 1) % windowSize;
-////                text = "";
-////                for (int i = 0; i < windowSize; i++) {
-////                    text += window[(windowPointer + i) % windowSize].getFirstSentence();
-////                }
-////                windowBlock.setFirstSentence(text);
-//
-//                windowVector.loadSentenceBlock(windowBlock);
-//                sumVector.loadSentenceBlock(sumBlock);
-//                windowVector.normalize(normVector); //normalize
-//                sumVector.normalize(normVector);
-//
-//                vectorBw.write(windowVector.toCSVLine());
-//                vectorBw.newLine();
-//            }
-//
-//            for (windowPointer = 0; windowPointer < windowSize; windowPointer++) {
-//                sumBlock.increase(window[windowPointer]);
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            throw new IOException();
-//        }
-//    }
 
     public static ADSentenceBlock getSum(String srcFilePath) {
         ADSentenceBlock sum = new ADSentenceBlock(0, "sum");
@@ -245,7 +165,6 @@ public class SlidingWindow {
         ADVector2 maxVector = new ADVector2();
         minVector.fill(Double.MAX_VALUE);
         maxVector.fill(Double.MIN_VALUE);
-        double[] vector;
         try (BufferedReader br = new BufferedReader(new FileReader(srcFilePath))) {
             String line;
             while ((line = br.readLine()) != null) {
